@@ -15,15 +15,18 @@ Found in:
   STRIPE_SECRET_KEY: src/payments.py:12
 ```
 
-## Run it
+## Install and run
 
-Requires Python 3.10 or newer. No packages to install.
+Requires Python 3.10 or newer. The tool has no runtime dependencies.
 
 ```bash
-python env_doctor.py path/to/project
-python env_doctor.py path/to/project --write-example
-python env_doctor.py path/to/project --json
+python -m pip install git+https://github.com/TimmyRow/env-doctor.git
+env-doctor path/to/project
+env-doctor path/to/project --write-example
+env-doctor path/to/project --json
 ```
+
+For a one-off check without installation, clone this repository and run `python env_doctor.py path/to/project`.
 
 The first command only reads files. It exits with code `1` if a referenced name is missing from `.env.example`, making it useful in CI. `--write-example` appends **empty placeholders** for missing names. It preserves existing entries, never copies values from `.env`, and is safe to run again. Review the result and add explanatory comments for each variable.
 
@@ -46,7 +49,7 @@ Python is parsed as code, so strings and comments do not count. The JavaScript s
 
 ```yaml
 - name: Check environment contract
-  run: python env_doctor.py .
+  run: env-doctor .
 ```
 
 ## Development

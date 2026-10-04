@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "env-doctor-cli"
+version = "0.1.0"
+description = "Find environment variables used in code but missing from .env.example"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "TimmyRow" }]
+keywords = ["dotenv", "environment-variables", "developer-tools", "cli"]
+
+[project.scripts]
+env-doctor = "env_doctor:main"
+
+[tool.setuptools]
+py-modules = ["env_doctor"]
