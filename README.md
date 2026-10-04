@@ -1,32 +1,52 @@
 # Env Doctor
 
-Env Doctor keeps a project's environment-variable contract honest. It scans Python, JavaScript, TypeScript, Docker Compose, and shell files, then compares what the code uses with `.env` and `.env.example`.
+**Find configuration gaps before they break a fresh install or deployment.**
 
-It answers the questions that regularly slow down local setup and deployment:
-
-- Which variables does the app use but fail to document?
-- Which documented variables are absent from my local `.env`?
-- Which `.env.example` entries are no longer used?
-- Can I update the example file without exposing secrets? (Yes—Env Doctor writes empty placeholders only.)
-
-## Quick start
-
-```bash
-python env_doctor.py .
-python env_doctor.py . --write-example
-python env_doctor.py . --json
-```
-
-The default command is read-only. `--write-example` appends only missing variable names to `.env.example`; it never copies values from `.env` and never removes existing entries.
-
-## Example output
+Env Doctor compares environment variables referenced in Python, JavaScript, TypeScript, shell, and Compose YAML files with the names in your project's `.env.example`. When a local `.env` exists, it also tells you which referenced names are absent there. Reports contain variable names and source locations, never secret values.
 
 ```text
-Env Doctor: 7 variables referenced in source.
+Env Doctor: 3 variables referenced in source.
 
 Missing from .env.example: STRIPE_SECRET_KEY
 Missing from .env: DATABASE_URL
 Documented but not referenced: OLD_API_TOKEN
+
+Found in:
+  STRIPE_SECRET_KEY: src/payments.py:12
+```
+
+## Run it
+
+Requires Python 3.10 or newer. No packages to install.
+
+```bash
+python env_doctor.py path/to/project
+python env_doctor.py path/to/project --write-example
+python env_doctor.py path/to/project --json
+```
+
+The first command only reads files. It exits with code `1` if a referenced name is missing from `.env.example`, making it useful in CI. `--write-example` appends **empty placeholders** for missing names. It preserves existing entries, never copies values from `.env`, and is safe to run again. Review the result and add explanatory comments for each variable.
+
+If `.env` is absent, the report says the local check was skipped. A missing `.env` is normal in CI and for people who have not set up the project yet.
+
+## What it recognizes
+
+| File | Examples |
+| --- | --- |
+| Python | `os.getenv("API_KEY")`, `os.environ["API_KEY"]`, `os.environ.get("API_KEY")` |
+| JavaScript / TypeScript | `process.env.API_KEY`, `process.env["API_KEY"]`, `import.meta.env.VITE_API_URL` |
+| Shell | `$API_KEY`, `${API_KEY}` |
+| YAML / Docker Compose | `${DATABASE_URL}`, `${DATABASE_URL:-default}` |
+
+Python is parsed as code, so strings and comments do not count. The JavaScript scanner ignores comments and ordinary string examples. Common dependency and build folders are skipped. Dynamic keys such as `process.env[name]` cannot be inferred; inspect those manually. Env Doctor reads root-level `.env` and `.env.example` files, and does not validate whether values are correct or safe.
+
+## JSON and CI
+
+`--json` returns `referenced`, `missing_from_example`, `missing_from_env`, `unused_in_example`, `env_present`, and `references` (file and line locations). The output contains no `.env` values.
+
+```yaml
+- name: Check environment contract
+  run: python env_doctor.py .
 ```
 
 ## Development
@@ -34,3 +54,5 @@ Documented but not referenced: OLD_API_TOKEN
 ```bash
 python -m unittest discover -s tests
 ```
+
+MIT licensed. Issues and pull requests are welcome, especially examples of environment syntax the scanner misses.
